@@ -1,0 +1,333 @@
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/RyuuSecretLua/XenoFluentUI-/refs/heads/main/Library%20lua"))()
+
+local UI = Library.new({
+	Title = "Uwu Hub",
+})
+
+local TabMain = UI:Tab({ Title = "Main" })
+local TabPlayer = UI:Tab({ Title = "Player" })
+local TabVisual = UI:Tab({ Title = "Visual" })
+local TabMisc = UI:Tab({ Title = "Misc" })
+
+TabMain:Section({ Title = "Automation" })
+
+TabMain:Button({
+	Title = "Auto Collect Orbs",
+	Callback = function()
+		local char = game.Players.LocalPlayer.Character
+		if not char then return end
+		local hrp = char:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+		for _, v in pairs(workspace:GetDescendants()) do
+			if v.Name == "Orb" or v.Name == "orb" then
+				pcall(firetouchinterest, hrp, v, 0)
+			end
+		end
+	end
+})
+
+TabMain:Button({
+	Title = "Auto Checkpoint",
+	Callback = function()
+		local char = game.Players.LocalPlayer.Character
+		if not char then return end
+		local hrp = char:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+		for i = 1, 999 do
+			local cp = workspace:FindFirstChild("Checkpoint" .. i)
+				or workspace:FindFirstChild("ClearStage" .. i)
+			if cp then
+				hrp.CFrame = cp:IsA("Model") and cp.PrimaryPart and cp.PrimaryPart.CFrame or CFrame.new(cp.Position)
+				task.wait(0.1)
+			end
+		end
+	end
+})
+
+TabMain:Section({ Title = "Remote" })
+
+TabMain:Button({
+	Title = "Fire All RemoteEvents",
+	Callback = function()
+		for _, v in pairs(game:GetDescendants()) do
+			if v:IsA("RemoteEvent") then
+				pcall(function() v:FireServer() end)
+			end
+		end
+	end
+})
+
+TabMain:Button({
+	Title = "Fire All RemoteFunctions",
+	Callback = function()
+		for _, v in pairs(game:GetDescendants()) do
+			if v:IsA("RemoteFunction") then
+				pcall(function() v:InvokeServer() end)
+			end
+		end
+	end
+})
+
+TabPlayer:Section({ Title = "Movement" })
+
+local speedToggle = TabPlayer:Toggle({
+	Title = "Speed Hack",
+	Default = false,
+	Callback = function(state)
+		local char = game.Players.LocalPlayer.Character
+		if not char then return end
+		local hum = char:FindFirstChildOfClass("Humanoid")
+		if hum then
+			hum.WalkSpeed = state and getgenv().XFUI_Speed or 16
+		end
+	end
+})
+
+TabPlayer:Slider({
+	Title = "Walk Speed",
+	Min = 16,
+	Max = 250,
+	Default = 60,
+	Callback = function(val)
+		getgenv().XFUI_Speed = val
+		local char = game.Players.LocalPlayer.Character
+		if not char then return end
+		local hum = char:FindFirstChildOfClass("Humanoid")
+		if speedToggle:Get() and hum then
+			hum.WalkSpeed = val
+		end
+	end
+})
+
+getgenv().XFUI_Speed = 60
+
+local jumpToggle = TabPlayer:Toggle({
+	Title = "Jump Power Hack",
+	Default = false,
+	Callback = function(state)
+		local char = game.Players.LocalPlayer.Character
+		if not char then return end
+		local hum = char:FindFirstChildOfClass("Humanoid")
+		if hum then
+			hum.JumpPower = state and getgenv().XFUI_Jump or 50
+		end
+	end
+})
+
+TabPlayer:Slider({
+	Title = "Jump Power",
+	Min = 50,
+	Max = 500,
+	Default = 150,
+	Callback = function(val)
+		getgenv().XFUI_Jump = val
+		local char = game.Players.LocalPlayer.Character
+		if not char then return end
+		local hum = char:FindFirstChildOfClass("Humanoid")
+		if jumpToggle:Get() and hum then
+			hum.JumpPower = val
+		end
+	end
+})
+
+getgenv().XFUI_Jump = 150
+
+TabPlayer:Section({ Title = "Teleport" })
+
+TabPlayer:Button({
+	Title = "Teleport to Spawn",
+	Callback = function()
+		local char = game.Players.LocalPlayer.Character
+		if not char then return end
+		local hrp = char:FindFirstChild("HumanoidRootPart")
+		local spawn = workspace:FindFirstChildOfClass("SpawnLocation")
+		if hrp and spawn then
+			hrp.CFrame = spawn.CFrame + Vector3.new(0, 3, 0)
+		end
+	end
+})
+
+TabPlayer:Button({
+	Title = "Teleport to All Players",
+	Callback = function()
+		local myChar = game.Players.LocalPlayer.Character
+		if not myChar then return end
+		local myHRP = myChar:FindFirstChild("HumanoidRootPart")
+		if not myHRP then return end
+		for _, plr in pairs(game.Players:GetPlayers()) do
+			if plr ~= game.Players.LocalPlayer then
+				local char = plr.Character
+				if char then
+					local hrp = char:FindFirstChild("HumanoidRootPart")
+					if hrp then
+						myHRP.CFrame = hrp.CFrame + Vector3.new(0, 3, 0)
+						task.wait(0.5)
+					end
+				end
+			end
+		end
+	end
+})
+
+TabPlayer:Section({ Title = "Target Player" })
+
+local playerNames = {}
+for _, plr in pairs(game.Players:GetPlayers()) do
+	table.insert(playerNames, plr.Name)
+end
+
+local targetSelect = TabPlayer:Select({
+	Title = "Target",
+	Options = playerNames,
+	Callback = function(val)
+		getgenv().XFUI_Target = val
+	end
+})
+
+getgenv().XFUI_Target = playerNames[1] or ""
+
+TabPlayer:Button({
+	Title = "Teleport to Target",
+	Callback = function()
+		local myChar = game.Players.LocalPlayer.Character
+		if not myChar then return end
+		local myHRP = myChar:FindFirstChild("HumanoidRootPart")
+		if not myHRP then return end
+		local target = game.Players:FindFirstChild(getgenv().XFUI_Target)
+		if target and target.Character then
+			local tHRP = target.Character:FindFirstChild("HumanoidRootPart")
+			if tHRP then
+				myHRP.CFrame = tHRP.CFrame + Vector3.new(0, 3, 0)
+			end
+		end
+	end
+})
+
+TabVisual:Section({ Title = "ESP" })
+
+local espToggle = TabVisual:Toggle({
+	Title = "Player ESP",
+	Default = false,
+	Callback = function(state)
+		getgenv().XFUI_ESP = state
+		if not state then
+			for _, plr in pairs(game.Players:GetPlayers()) do
+				if plr ~= game.Players.LocalPlayer and plr.Character then
+					local bb = plr.Character:FindFirstChild("XFUI_ESP")
+					if bb then bb:Destroy() end
+				end
+			end
+		end
+	end
+})
+
+getgenv().XFUI_ESP = false
+
+task.spawn(function()
+	while task.wait(1) do
+		if not getgenv().XFUI_ESP then continue end
+		for _, plr in pairs(game.Players:GetPlayers()) do
+			if plr == game.Players.LocalPlayer then continue end
+			local char = plr.Character
+			if not char then continue end
+			local root = char:FindFirstChild("HumanoidRootPart")
+			if not root then continue end
+			if not char:FindFirstChild("XFUI_ESP") then
+				local bb = Instance.new("BillboardGui")
+				bb.Name = "XFUI_ESP"
+				bb.Size = UDim2.new(0, 120, 0, 30)
+				bb.StudsOffset = Vector3.new(0, 3, 0)
+				bb.AlwaysOnTop = true
+				bb.Parent = root
+				local lbl = Instance.new("TextLabel")
+				lbl.Size = UDim2.new(1, 0, 1, 0)
+				lbl.BackgroundTransparency = 1
+				lbl.Text = plr.Name
+				lbl.Font = Enum.Font.GothamBold
+				lbl.TextSize = 14
+				lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+				lbl.TextStrokeTransparency = 0
+				lbl.Parent = bb
+			end
+		end
+	end
+end)
+
+TabVisual:Toggle({
+	Title = "Fullbright",
+	Default = false,
+	Callback = function(state)
+		game:GetService("Lighting").Brightness = state and 10 or 1
+		game:GetService("Lighting").ClockTime = state and 14 or game:GetService("Lighting").ClockTime
+	end
+})
+
+TabVisual:Section({ Title = "Render" })
+
+TabVisual:Slider({
+	Title = "Render Quality",
+	Min = 1,
+	Max = 10,
+	Default = 5,
+	Callback = function(val)
+		settings().Rendering.QualityLevel = val
+	end
+})
+
+TabVisual:Toggle({
+	Title = "Disable Shadows",
+	Default = false,
+	Callback = function(state)
+		game:GetService("Lighting").GlobalShadows = not state
+	end
+})
+
+TabMisc:Section({ Title = "Workspace" })
+
+TabMisc:Button({
+	Title = "Print All RemoteEvents",
+	Callback = function()
+		for _, v in pairs(game:GetDescendants()) do
+			if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
+				print(v:GetFullName())
+			end
+		end
+	end
+})
+
+TabMisc:Button({
+	Title = "Rejoin Server",
+	Callback = function()
+		game:GetService("TeleportService"):Teleport(game.PlaceId, game.Players.LocalPlayer)
+	end
+})
+
+TabMisc:Section({ Title = "Input" })
+
+local inputBox = TabMisc:Input({
+	Title = "Custom WalkSpeed",
+	Placeholder = "Masukkan angka...",
+	Default = "",
+})
+
+TabMisc:Button({
+	Title = "Apply WalkSpeed",
+	Callback = function()
+		local val = tonumber(inputBox:Get())
+		if not val then return end
+		local char = game.Players.LocalPlayer.Character
+		if not char then return end
+		local hum = char:FindFirstChildOfClass("Humanoid")
+		if hum then hum.WalkSpeed = val end
+	end
+})
+
+TabMisc:Section({ Title = "Multi Select" })
+
+TabMisc:SelectToggle({
+	Title = "Active Features",
+	Options = { "Speed", "Jump", "ESP", "Fullbright" },
+	Callback = function(states, selected)
+		print("Active:", table.concat(selected, ", "))
+	end
+})
